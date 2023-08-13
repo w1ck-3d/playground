@@ -13,40 +13,28 @@
 import numpy as np
 from scipy import linalg
 
-from sklearn.utils.extmath import safe_sparse_dot
-
-from sklearn.utils._array_api import (
-    _asarray_with_order,
-    _is_numpy_namespace,
-    get_namespace,
-)
+from sklearn.utils._array_api import _asarray_with_order, get_namespace
 
 
 def column_or_1d(y, *, dtype=None, warn=False):
     xp, _ = get_namespace(y)
-    y = check_array(
-        y,
-        dtype=dtype,
-    )
+    y = check_array(y, dtype=dtype)
 
-    shape = y.shape
-    if len(shape) == 1:
-        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
-    if len(shape) == 2 and shape[1] == 1:
-        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
+    if len(y.shape) == 1:
+        return _asarray_with_order(xp.reshape(y, (-1,)), xp=xp)
+
+    return _asarray_with_order(xp.reshape(y, (-1,)), xp=xp)
 
 
-def check_X_y(X, y, *, dtype="numeric", order=None, copy=False):
-    X = check_array(X, dtype=dtype, order=order, copy=copy)
+def check_X_y(X, y, *, dtype="numeric", copy=False):
+    X = check_array(X, dtype=dtype, copy=copy)
     y = column_or_1d(y, warn=True)
 
     return X, y
 
 
-def check_array(array, *, dtype="numeric", order=None, copy=False):
+def check_array(array, *, dtype="numeric", copy=False):
     xp, is_array_api_compliant = get_namespace(array)
-
-    array_orig = array
 
     dtype_numeric = isinstance(dtype, str) and dtype == "numeric"
 
@@ -64,16 +52,13 @@ def check_array(array, *, dtype="numeric", order=None, copy=False):
         else:
             dtype = None
 
-    if dtype is not None and _is_numpy_namespace(xp):
+    if dtype is not None:
         dtype = np.dtype(dtype)
 
-    if dtype is not None and _is_numpy_namespace(xp):
-        dtype = np.dtype(dtype)
-
-    array = _asarray_with_order(array, order=order, dtype=dtype, xp=xp)
+    array = _asarray_with_order(array, dtype=dtype, xp=xp)
 
     if copy:
-        array = _asarray_with_order(array, dtype=dtype, order=order, copy=True, xp=xp)
+        array = _asarray_with_order(array, dtype=dtype, copy=True, xp=xp)
 
     return array
 
@@ -97,7 +82,7 @@ def _preprocess_data(X, y):
 class LinearRegression:
     def predict(self, X):
         X = check_array(X)
-        return safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
+        return np.dot(X, self.coef_.T) + self.intercept_
 
     def _set_intercept(self, X_offset, y_offset, X_scale):
         self.coef_ = np.divide(self.coef_, X_scale, dtype=X_scale.dtype)
