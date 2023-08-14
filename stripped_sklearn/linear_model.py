@@ -16,23 +16,6 @@ from scipy import linalg
 from sklearn.utils._array_api import _asarray_with_order, get_namespace
 
 
-def column_or_1d(y, *, dtype=None, warn=False):
-    xp, _ = get_namespace(y)
-    y = check_array(y, dtype=dtype)
-
-    if len(y.shape) == 1:
-        return _asarray_with_order(xp.reshape(y, (-1,)), xp=xp)
-
-    return _asarray_with_order(xp.reshape(y, (-1,)), xp=xp)
-
-
-def check_X_y(X, y, *, dtype="numeric", copy=False):
-    X = check_array(X, dtype=dtype, copy=copy)
-    y = column_or_1d(y, warn=True)
-
-    return X, y
-
-
 def check_array(array, *, dtype="numeric", copy=False):
     xp, is_array_api_compliant = get_namespace(array)
 
@@ -95,7 +78,13 @@ class LinearRegression:
         return r2_score(y, y_pred, sample_weight=sample_weight)
 
     def fit(self, X, y):
-        X, y = check_X_y(X, y)
+        X = check_array(X, dtype="numeric", copy=False)
+
+        xp, _ = get_namespace(y)
+        y = check_array(y, dtype=None)
+
+        y = _asarray_with_order(xp.reshape(y, (-1,)), xp=xp)
+
         X, y, X_offset, y_offset, X_scale = _preprocess_data(X, y)
 
         self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y)
