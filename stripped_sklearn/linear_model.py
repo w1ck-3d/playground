@@ -71,12 +71,6 @@ class LinearRegression:
         self.coef_ = np.divide(self.coef_, X_scale, dtype=X_scale.dtype)
         self.intercept_ = y_offset - np.dot(X_offset, self.coef_.T)
 
-    def score(self, X, y, sample_weight=None):
-        from sklearn.metrics import r2_score
-
-        y_pred = self.predict(X)
-        return r2_score(y, y_pred, sample_weight=sample_weight)
-
     def fit(self, X, y):
         X = check_array(X, dtype="numeric", copy=False)
 
