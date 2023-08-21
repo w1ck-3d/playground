@@ -13,35 +13,21 @@
 import numpy as np
 from scipy import linalg
 
-from sklearn.utils._array_api import _asarray_with_order, get_namespace
-
 
 def check_array(array, *, dtype="numeric", copy=False):
-    xp, is_array_api_compliant = get_namespace(array)
-
     dtype_numeric = isinstance(dtype, str) and dtype == "numeric"
 
     dtype_orig = getattr(array, "dtype", None)
-    if not is_array_api_compliant and not hasattr(dtype_orig, "kind"):
+    if not hasattr(dtype_orig, "kind"):
         dtype_orig = None
 
     if dtype_numeric:
-        if (
-            dtype_orig is not None
-            and hasattr(dtype_orig, "kind")
-            and dtype_orig.kind == "O"
-        ):
-            dtype = xp.float64
-        else:
-            dtype = None
+        dtype = None
 
     if dtype is not None:
         dtype = np.dtype(dtype)
 
-    array = _asarray_with_order(array, dtype=dtype, xp=xp)
-
-    if copy:
-        array = _asarray_with_order(array, dtype=dtype, copy=True, xp=xp)
+    array = np.array(array, copy=copy, dtype=dtype)
 
     return array
 
@@ -74,10 +60,8 @@ class LinearRegression:
     def fit(self, X, y):
         X = check_array(X, dtype="numeric", copy=False)
 
-        xp, _ = get_namespace(y)
         y = check_array(y, dtype=None)
-
-        y = _asarray_with_order(xp.reshape(y, (-1,)), xp=xp)
+        y = np.array(np.reshape(y, (-1,)))
 
         X, y, X_offset, y_offset, X_scale = _preprocess_data(X, y)
 
